@@ -25,8 +25,6 @@ inline void init(){
     dt = 1.0;
     U = 0.1;
     rho0 = 1.0;
-    // niu = 0.0075;
-    // Re = U*Lx/niu;
     Re = 100;
     niu = U*Lx/Re;
     c = dx/dt;
@@ -113,7 +111,7 @@ inline void output(int num){
     ostringstream name;
     name<<"couette_flow"<<num<<".dat";
     ofstream out(name.str().c_str());
-    out<<"Title= \"LBM Lid Driven Flow\"\n"<<"VARIABLES=\"X\",\"Y\",\"U\",\"V\"\n"<<"ZONE T=\"BOX\",I="<<NX+1<<",J="<<NY+1<<",F=POINT"<<endl;
+    out<<"Title= \"LBM Couette Flow\"\n"<<"VARIABLES=\"X\",\"Y\",\"U\",\"V\"\n"<<"ZONE T=\"BOX\",I="<<NX+1<<",J="<<NY+1<<",F=POINT"<<endl;
     for(int i=0;i<=NX;i++){
         for(int j=0;j<=NY;j++){
             out<<double(i)/Lx<<" "<<double(j)/Ly<<" "<<u[i][j][0]<<" "<<u[i][j][1]<<endl;

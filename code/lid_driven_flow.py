@@ -28,9 +28,9 @@ f_eq = np.zeros((NX+1,NY+1,9))
 
 c = dL / dT 
 c_s = c / 3**0.5
-rho_0 = 1 # density_0
+rho_0 = 1.0 # density_0
 U = 0.1 # blank speed
-Re = 1000
+Re = 400.0
 nu = U * Lx / Re
 tau = nu / c_s**2 + 0.5 * dT # relaxation time
 
@@ -41,7 +41,7 @@ for i in range(9):
     f[:,:,i] = w[i] * rho[:,:] * (1 + (u[:,:,0]*e[i][0] + u[:,:,1]*e[i][1])/c_s**2 +(u[:,:,0]*e[i][0] + u[:,:,1]*e[i][1])**2/(2*c_s**4) - (u[:,:,0]*u[:,:,0] + u[:,:,1]*u[:,:,1])/(2*c_s**2))
 
 # lbm
-MaxIteration = 100
+MaxIteration = 13000
 for ite in range(MaxIteration):
     # collision
     for k in range(9):

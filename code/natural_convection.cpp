@@ -7,7 +7,7 @@ const int NY = 100;
 int e[Q][2] = {{0,0},{1,0},{0,1},{-1,0},{0,-1},{1,1},{-1,1},{-1,-1},{1,-1}};
 double w[Q] = {4.0/9,1.0/9,1.0/9,1.0/9,1.0/9,1.0/36,1.0/36,1.0/36,1.0/36};
 double rho[NX+1][NY+1], u[NX+1][NY+1][2], u0[NX+1][NY+1][2], f[NX+1][NY+1][Q], F[NX+1][NY+1][Q], T[NX+1][NY+1][Q], TT[NX+1][NY+1][Q];
-double U,Re,Ra,Pr,Ma,dx,dy,dt,Lx,Ly,rho0,tau,niu,c,cs,T0,T_left,T_right;
+double U,Re,Ra,Pr,Ma,beta,g,dx,dy,dt,Lx,Ly,rho0,tau,niu,c,cs,T0,T_left,T_right;
 
 inline double feq(int k,double rho,double u[2]){
     double res;
@@ -41,7 +41,6 @@ inline void init(){
     tau = niu/(cs*cs) + 0.5*dt;
     memset(u,0,sizeof(u));
     for(int i=0;i<=NX;i++){
-        u[i][NY][0] = U; // lid speed = U
         for(int j=0;j<=NY;j++){
             rho[i][j] = rho0;
             for(int k=0;k<Q;k++){
