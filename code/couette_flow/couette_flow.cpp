@@ -2,7 +2,7 @@
 using namespace std;
 
 const int Q = 9;
-const int NX = 200;
+const int NX = 100;
 const int NY = 100;
 int e[Q][2] = {{0,0},{1,0},{0,1},{-1,0},{0,-1},{1,1},{-1,1},{-1,-1},{1,-1}};
 double w[Q] = {4.0/9,1.0/9,1.0/9,1.0/9,1.0/9,1.0/36,1.0/36,1.0/36,1.0/36};
@@ -25,7 +25,7 @@ inline void init(){
     dt = 1.0;
     U = 0.1;
     rho0 = 1.0;
-    Re = 100;
+    Re = 1000;
     niu = U*Lx/Re;
     c = dx/dt;
     cs = c/sqrt(3.0);
@@ -43,12 +43,14 @@ inline void init(){
 }
 
 inline void evolution(){
-    // collision
-    for(int i=1;i<NX;i++){
+    // collision & streaming
+    for(int i=0;i<=NX;i++){
         for(int j=1;j<NY;j++){
             for(int k=0;k<Q;k++){
                 int ip = i - e[k][0];
                 int jp = j - e[k][1];
+                if(ip<0) ip=NX;
+                if(ip>NX) ip=0;
                 F[i][j][k] = f[ip][jp][k] + (feq(k,rho[ip][jp],u[ip][jp]) - f[ip][jp][k])/tau;
             }
         }
@@ -58,8 +60,29 @@ inline void evolution(){
     memset(rho,0,sizeof(rho));
     memset(u,0,sizeof(u));
 
-    // streaming
-    for(int i=1;i<NX;i++){
+    // for(int j=1;j<NY;j++){
+    //     for(int k=0;k<Q;k++){
+    //         if(k==1||k==5||k==8){
+    //             int ip = NX-e[k][0];
+    //             int jp = j-e[k][1];
+    //             F[NX][j][k] = f[ip][jp][k] + (feq(k,rho[ip][jp],u[ip][jp]) - f[ip][jp][k])/tau;
+    //         }
+    //         if(k==3||k==6||k==7){
+    //             int ip = 0-e[k][0];
+    //             int jp = j-e[k][1];
+    //             F[0][j][k] = f[ip][jp][k] + (feq(k,rho[ip][jp],u[ip][jp]) - f[ip][jp][k])/tau;
+    //         }
+    //         if(k==1||k==5||k==8)
+    //             F[0][j][k] = F[NX][j][k];
+    //         if(k==3||k==6||k==7)
+    //             F[NX][j][k] = F[0][j][k];
+    //     }
+    // }
+
+    
+
+    // get_macro_value
+    for(int i=0;i<=NX;i++){
         for(int j=1;j<NY;j++){
             for(int k=0;k<Q;k++){
                 f[i][j][k] = F[i][j][k];
@@ -69,16 +92,6 @@ inline void evolution(){
             }
             u[i][j][0] /= rho[i][j];
             u[i][j][1] /= rho[i][j];
-        }
-    }
-
-    // left & right boundary
-    for(int j=1;j<NY;j++){
-        rho[0][j] = rho[1][j];
-        rho[NX][j] = rho[NX-1][j];
-        for(int k=0;k<Q;k++){
-            f[0][j][k] = feq(k,rho[0][j],u[0][j]) + (1-1/tau) * (f[1][j][k] - feq(k,rho[1][j],u[1][j]));
-            f[NX][j][k] = feq(k,rho[NX][j],u[NX][j]) + (1-1/tau) * (f[NX-1][j][k] - feq(k,rho[NX-1][j],u[NX-1][j]));
         }
     }
 
