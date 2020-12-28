@@ -10,6 +10,11 @@ double gamma[Q] = {0,1.0/3,1.0/3,1.0/3,1.0/3,1.0/12,1.0/12,1.0/12,1.0/12};
 double rho[NX+1][NY+1], u[NX+1][NY+1][2], u0[NX+1][NY+1][2], f[NX+1][NY+1][Q], F[NX+1][NY+1][Q];
 double U,Re,dx,dy,dt,Lx,Ly,rho0,tau,niu,c,cs,f_x,f_y;
 
+struct rectangle
+{
+    int x1,y1,x2,y2;
+}rec[1];
+
 inline double feq(int k,double rho,double u[2]){
     double res;
     double eu = e[k][0]*u[0]+e[k][1]*u[1];
@@ -18,21 +23,31 @@ inline double feq(int k,double rho,double u[2]){
     return res;
 }
 
+inline bool inrec(int x,int y,int id){
+    return x>=rec[id].x1&&x<=rec[id].x2&&y>=rec[id].y1&&y<=rec[id].y2;
+}
+
+inline void set_single_rec_geo(int id,int x1,int y1,int x2,int y2){
+    rec[id] = rectangle{x1,y1,x2,y2};
+}
+
 inline void init(){
     dx = 1.0;
     dy = 1.0;
     Lx = 1.0*dx*NX;
     Ly = 1.0*dy*NY;
     dt = 1.0;
-    U = 0.1;
     rho0 = 1.0;
-    f_x = 1e-6;
+    f_x = 1e-5;
     f_y = 0;
-    Re = 1000;
-    niu = U*Lx/Re;
+    Re = 3000;
+    niu = 0.01;
     c = dx/dt;
     cs = c/sqrt(3.0);
     tau = niu/(cs*cs) + 0.5*dt;
+
+    set_single_rec_geo(0,30,30,60,60);
+
     memset(u,0,sizeof(u));
     for(int i=0;i<=NX;i++){
         for(int j=0;j<=NY;j++){
@@ -48,9 +63,11 @@ inline void evolution(){
     // collision & streaming
     for(int i=0;i<=NX;i++){
         for(int j=1;j<NY;j++){
+            if(inrec(i,j,0)) continue;
             for(int k=0;k<Q;k++){
                 int ip = i - e[k][0];
                 int jp = j - e[k][1];
+                // periodic boundary
                 if(ip<0) ip=NX;
                 if(ip>NX) ip=0;
                 F[i][j][k] = f[ip][jp][k] + (feq(k,rho[ip][jp],u[ip][jp]) - f[ip][jp][k])/tau;
@@ -65,11 +82,15 @@ inline void evolution(){
     // get_macro_value
     for(int i=0;i<=NX;i++){
         for(int j=1;j<NY;j++){
-            for(int k=0;k<Q;k++){
-                f[i][j][k] = F[i][j][k] + gamma[k] * (f_x * e[k][0] + f_y * e[k][1]);
-                rho[i][j] += f[i][j][k];
-                u[i][j][0] += e[k][0] * f[i][j][k];
-                u[i][j][1] += e[k][1] * f[i][j][k];
+            if(inrec(i,j,0)) rho[i][j] = 1.0;
+            else{
+                for(int k=0;k<Q;k++){
+                	// pressure boundary
+                    f[i][j][k] = F[i][j][k] + gamma[k] * (f_x * e[k][0] + f_y * e[k][1]);
+                    rho[i][j] += f[i][j][k];
+                    u[i][j][0] += e[k][0] * f[i][j][k];
+                    u[i][j][1] += e[k][1] * f[i][j][k];
+                }
             }
             u[i][j][0] /= rho[i][j];
             u[i][j][1] /= rho[i][j];
@@ -80,7 +101,6 @@ inline void evolution(){
     for(int i=0;i<=NX;i++){
         rho[i][0] = rho[i][1];
         rho[i][NY] = rho[i][NY-1];
-        // u[i][NY][0] = U;
         for(int k=0;k<Q;k++){
             f[i][0][k] = feq(k,rho[i][0],u[i][0]) + (1-1/tau) * (f[i][1][k] - feq(k,rho[i][1],u[i][1]));
             f[i][NY][k] = feq(k,rho[i][NY],u[i][NY]) + (1-1/tau) * (f[i][NY-1][k] - feq(k,rho[i][NY-1],u[i][NY-1]));
@@ -103,7 +123,7 @@ inline double ERR(){
 
 inline void output(int num){
     ostringstream name;
-    name<<"poiseuille_flow"<<num<<".dat";
+    name<<"poiseuille_flow_with_rec"<<num<<".dat";
     ofstream out(name.str().c_str());
     out<<"Title= \"LBM Couette Flow\"\n"<<"VARIABLES=\"X\",\"Y\",\"U\",\"V\"\n"<<"ZONE T=\"BOX\",I="<<NX+1<<",J="<<NY+1<<",F=POINT"<<endl;
     for(int i=0;i<=NX;i++){
